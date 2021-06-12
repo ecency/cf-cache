@@ -4,6 +4,9 @@ Simple script to purge Cloudflare cache for user avatars, cache purge issue when
 
 ### Env variables
 
+
 `CF_KEY` - cloudflare api token
+
 `CF_ZONE` - cloudflare zone (domain/website id)
+
 `DOMAIN` - imagehoster instance, e.g. https://images.ecency.com
