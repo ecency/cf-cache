@@ -66,8 +66,8 @@ function die(msg) {
 }
 
 function ihAlive() {
-  request(domain , function (error, response, body) {  
-    if(response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202){
+  return request(domain , function (error, response, body) {
+    if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202){
       console.log(domain + ' is up!!');
       return true;
     }
