@@ -1,6 +1,6 @@
 # Cloudflare cache purge
 
-Simple script to purge Cloudflare cache for user avatars, cache purge issue when account update operations are detected on Hive blockchain.
+Simple script to purge Cloudflare cache for user avatars, cache purged when account update operations are detected on Hive blockchain.
 
 ### Env variables
 
