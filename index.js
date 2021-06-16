@@ -41,8 +41,8 @@ async function getOperations() {
               ]
               const isIHAlive = await ihAlive();
               if (isIHAlive) {
+                console.log('purging', targetUrls);
                 cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(function (data) {
-                  console.log(`${new Date().toISOString()} cloudflare cache purged for: ${targetUrls}`)
                   console.log(`${new Date().toISOString()} result:`, data)
                 }, function (error) {
                   console.error(new Date().toISOString(), error)
