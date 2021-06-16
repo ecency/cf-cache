@@ -2,6 +2,7 @@ const dhive = require('@hiveio/dhive')
 const _ = require('lodash')
 const cloudflare = require('cloudflare')
 const request = require("request");
+const { uniq } = require('lodash');
 
 // the cloudflare api key
 const CF_KEY = process.env['CF_KEY'] || die('CF_KEY missing')
@@ -19,6 +20,10 @@ const domain = process.env['DOMAIN'] || 'https://images.ecency.com'
 // setup the dhive client
 const client = new dhive.Client(['https://api.hive.blog', 'https://rpc.ecency.com', 'https://api.deathwing.me'])
 
+// queue in memory
+
+let users = [];
+
 // get latest block and its operations
 async function getOperations() {
   try {
@@ -29,25 +34,8 @@ async function getOperations() {
           for (let op of tx.operations) {
             if (op[0] === 'account_update2') {
               const user = op[1].account
-              const targetUrls = [
-                `${domain}/u/${user}/avatar`,
-                `${domain}/u/${user}/avatar/small`,
-                `${domain}/u/${user}/avatar/medium`,
-                `${domain}/u/${user}/avatar/large`,
-                `${domain}/webp/u/${user}/avatar`,
-                `${domain}/webp/u/${user}/avatar/small`,
-                `${domain}/webp/u/${user}/avatar/medium`,
-                `${domain}/webp/u/${user}/avatar/large`,
-              ]
-              const isIHAlive = await ihAlive();
-              if (isIHAlive) {
-                console.log('purging', targetUrls);
-                cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(function (data) {
-                  console.log(`${new Date().toISOString()} result:`, data)
-                }, function (error) {
-                  console.error(new Date().toISOString(), error)
-                });  
-              }
+              users.push(user);
+              await purge();
             }
           }
         }
@@ -79,4 +67,35 @@ async function ihAlive() {
     console.log(domain + ' is down!!');
     return false
   });
+}
+
+async function purge() {
+  let targetUrls = [];
+  if (users.length > 0) {
+    for (let i = 0; i < users.length; i++) {
+      const u = users[i];
+      targetUrls = [...targetUrls,...[
+          `${domain}/u/${u}/avatar`,
+          `${domain}/u/${u}/avatar/small`,
+          `${domain}/u/${u}/avatar/medium`,
+          `${domain}/u/${u}/avatar/large`,
+          `${domain}/webp/u/${u}/avatar`,
+          `${domain}/webp/u/${u}/avatar/small`,
+          `${domain}/webp/u/${u}/avatar/medium`,
+          `${domain}/webp/u/${u}/avatar/large`,
+        ]      
+      ]
+    }
+    const isIHAlive = await ihAlive();
+    if (isIHAlive) {
+      console.log('purging', targetUrls);
+      cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(function (data) {
+        console.log(`${new Date().toISOString()} result:`, data)
+        users = [];
+        targetUrls = [];
+      }, function (error) {
+        console.error(new Date().toISOString(), error)
+      });  
+    } 
+  }
 }
