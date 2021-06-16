@@ -27,7 +27,7 @@ async function getOperations() {
       if (_.has(block, 'transactions[0].operations')) {
         for (let tx of block.transactions) {
           for (let op of tx.operations) {
-            if (op[0] === 'account_update' || op[0] === 'account_update2') {
+            if (op[0] === 'account_update2') {
               const user = op[1].account
               const targetUrls = [
                 `${domain}/u/${user}/avatar`,
@@ -39,7 +39,8 @@ async function getOperations() {
                 `${domain}/webp/u/${user}/avatar/medium`,
                 `${domain}/webp/u/${user}/avatar/large`,
               ]
-              if (ihAlive()) {
+              const isIHAlive = await ihAlive();
+              if (isIHAlive) {
                 cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(function (data) {
                   console.log(`${new Date().toISOString()} cloudflare cache purged for: ${targetUrls}`)
                   console.log(`${new Date().toISOString()} result:`, data)
@@ -65,7 +66,7 @@ function die(msg) {
   process.exit(1)
 }
 
-function ihAlive() {
+async function ihAlive() {
   return request(domain , function (error, response, body) {
     if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202){
       console.log(domain + ' is up!!');
