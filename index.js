@@ -3,6 +3,7 @@ const _ = require('lodash')
 const cloudflare = require('cloudflare')
 const request = require("request");
 const { uniq } = require('lodash');
+const storage = require('node-persist');
 
 // the cloudflare api key
 const CF_KEY = process.env['CF_KEY'] || die('CF_KEY missing')
@@ -26,6 +27,8 @@ let users = [];
 
 // get latest block and its operations
 async function getOperations() {
+  await storage.init( /* options ... */ );
+  users = await storage.getItem('users') || [];
   try {
     for await (const block of client.blockchain.getBlocks({mode: dhive.BlockchainMode.Latest})) {
       //console.log('new block, id:', block.block_id)
@@ -35,6 +38,7 @@ async function getOperations() {
             if (op[0] === 'account_update2') {
               const user = op[1].account
               users.push(user);
+              await storage.setItem('users',users);
               await purge();
             }
           }
@@ -89,9 +93,10 @@ async function purge() {
     const isIHAlive = await ihAlive();
     if (isIHAlive) {
       console.log('purging', targetUrls);
-      cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(function (data) {
+      cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(async function (data) {
         console.log(`${new Date().toISOString()} result:`, data)
         users = [];
+        await storage.setItem('users', users);
         targetUrls = [];
       }, function (error) {
         console.error(new Date().toISOString(), error)
