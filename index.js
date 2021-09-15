@@ -87,6 +87,8 @@ async function purge() {
           `${domain}/webp/u/${u}/avatar/small`,
           `${domain}/webp/u/${u}/avatar/medium`,
           `${domain}/webp/u/${u}/avatar/large`,
+          `${domain}/webp/u/${u}/cover`,
+          `${domain}/u/${u}/cover`,
         ]      
       ]
     }
