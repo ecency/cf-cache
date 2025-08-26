@@ -1,16 +1,24 @@
 const dhive = require('@hiveio/dhive')
 const _ = require('lodash')
-const { Cloudflare } = require('cloudflare')
+const Cloudflare = require('cloudflare')
 const request = require("request");
-const { uniq } = require('lodash');
 const storage = require('node-persist');
 
-// the cloudflare api key
-const CF_KEY = process.env['CF_KEY'] || die('CF_KEY missing')
+// the cloudflare credentials
 const CF_ZONE = process.env['CF_ZONE'] || die('CF_ZONE missing')
+const CF_API_TOKEN = process.env['CF_API_TOKEN']
+const CF_EMAIL = process.env['CF_EMAIL']
+const CF_KEY = process.env['CF_KEY']
 
 // setup the cloudflare
-const cf = new Cloudflare({ apiToken: CF_KEY })
+let cf
+if (CF_API_TOKEN) {
+  cf = new Cloudflare({ token: CF_API_TOKEN })
+} else if (CF_EMAIL && CF_KEY) {
+  cf = new Cloudflare({ email: CF_EMAIL, key: CF_KEY })
+} else {
+  die('CF_API_TOKEN or CF_EMAIL and CF_KEY missing')
+}
 
 // lookup zones if do not know
 //cf.zones.browse().then(console.log)
@@ -100,7 +108,7 @@ async function purge() {
     if (isIHAlive) {
       console.log('purging', targetUrls);
       try {
-        const data = await cf.cache.purge({ zone_id: CF_ZONE, files: targetUrls });
+        const data = await cf.zones.purgeCache(CF_ZONE, { files: targetUrls });
         console.log(`${new Date().toISOString()} result:`, data);
         users = [];
         await storage.setItem('users', users);
