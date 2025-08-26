@@ -12,3 +12,5 @@ Simple script to purge Cloudflare cache for user avatars, cache purged when acco
 `CF_EMAIL` and `CF_KEY` - legacy email and global API key (used only if no token is provided)
 
 `DOMAIN` - imagehoster instance, e.g. https://images.ecency.com
+
+Purges are sent in batches of up to 30 URLs to comply with Cloudflare plan limits.

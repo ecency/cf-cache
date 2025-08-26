@@ -35,6 +35,7 @@ const client = new dhive.Client(['https://api.hive.blog', 'https://rpc.ecency.co
 // queue in memory
 
 let users = [];
+const PURGE_BATCH_SIZE = 30;
 
 // get latest block and its operations
 async function getOperations() {
@@ -49,6 +50,7 @@ async function getOperations() {
             if (op[0] === 'account_update2') {
               const user = op[1].account
               users.push(user);
+              users = _.uniq(users);
               await storage.setItem('users', users);
               try {
                 await purge();
@@ -112,16 +114,19 @@ async function purge() {
     }
     const isIHAlive = await ihAlive();
     if (isIHAlive) {
-      console.log('purging', targetUrls);
-      try {
-        const data = await cf.cache.purge({ zone_id: CF_ZONE, files: targetUrls });
-        console.log(`${new Date().toISOString()} result:`, data);
-        users = [];
-        await storage.setItem('users', users);
-        targetUrls = [];
-      } catch (error) {
-        console.error(new Date().toISOString(), error);
+      console.log('purging', targetUrls.length, 'files');
+      const batches = _.chunk(targetUrls, PURGE_BATCH_SIZE);
+      for (const files of batches) {
+        try {
+          const data = await cf.cache.purge({ zone_id: CF_ZONE, files });
+          console.log(`${new Date().toISOString()} result:`, data);
+        } catch (error) {
+          console.error(new Date().toISOString(), error);
+        }
       }
+      users = [];
+      await storage.setItem('users', users);
+      targetUrls = [];
     }
   }
 }
