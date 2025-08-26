@@ -1,6 +1,6 @@
 const dhive = require('@hiveio/dhive')
 const _ = require('lodash')
-const cloudflare = require('cloudflare')
+const Cloudflare = require('cloudflare').default
 const request = require("request");
 const { uniq } = require('lodash');
 const storage = require('node-persist');
@@ -10,7 +10,7 @@ const CF_KEY = process.env['CF_KEY'] || die('CF_KEY missing')
 const CF_ZONE = process.env['CF_ZONE'] || die('CF_ZONE missing')
 
 // setup the cloudflare
-const cf = new cloudflare({token: CF_KEY})
+const cf = new Cloudflare({ apiToken: CF_KEY })
 
 // lookup zones if do not know
 //cf.zones.browse().then(console.log)
@@ -95,14 +95,15 @@ async function purge() {
     const isIHAlive = await ihAlive();
     if (isIHAlive) {
       console.log('purging', targetUrls);
-      cf.zones.purgeCache(CF_ZONE, { "files": targetUrls }).then(async function (data) {
-        console.log(`${new Date().toISOString()} result:`, data)
+      try {
+        const data = await cf.zones.purgeCache(CF_ZONE, { files: targetUrls });
+        console.log(`${new Date().toISOString()} result:`, data);
         users = [];
         await storage.setItem('users', users);
         targetUrls = [];
-      }, function (error) {
-        console.error(new Date().toISOString(), error)
-      });  
-    } 
+      } catch (error) {
+        console.error(new Date().toISOString(), error);
+      }
+    }
   }
 }
