@@ -7,17 +7,20 @@ const storage = require('node-persist');
 // the cloudflare credentials
 const CF_ZONE = process.env['CF_ZONE'] || die('CF_ZONE missing')
 const CF_API_TOKEN = process.env['CF_API_TOKEN']
+const CF_ACCOUNT_API_TOKEN = process.env['CF_ACCOUNT_API_TOKEN']
 const CF_EMAIL = process.env['CF_EMAIL']
 const CF_KEY = process.env['CF_KEY']
 
 // setup the cloudflare
 let cf
 if (CF_API_TOKEN) {
-  cf = new Cloudflare({ token: CF_API_TOKEN })
+  cf = new Cloudflare({ apiToken: CF_API_TOKEN })
+} else if (CF_ACCOUNT_API_TOKEN) {
+  cf = new Cloudflare({ apiToken: CF_ACCOUNT_API_TOKEN })
 } else if (CF_EMAIL && CF_KEY) {
-  cf = new Cloudflare({ email: CF_EMAIL, key: CF_KEY })
+  cf = new Cloudflare({ apiEmail: CF_EMAIL, apiKey: CF_KEY })
 } else {
-  die('CF_API_TOKEN or CF_EMAIL and CF_KEY missing')
+  die('CF_API_TOKEN, CF_ACCOUNT_API_TOKEN, or CF_EMAIL and CF_KEY missing')
 }
 
 // lookup zones if do not know
@@ -71,17 +74,20 @@ function die(msg) {
 }
 
 async function ihAlive() {
-  return request(domain , function (error, response, body) {
-    if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202){
-      console.log(domain + ' is up!!');
-      return true;
-    }
-    if (error){
-      console.log('domain check err: '+ error);
-      return false;
-    }
-    console.log(domain + ' is down!!');
-    return false
+  return new Promise((resolve) => {
+    request(domain, (error, response) => {
+      if (!error && response && response.statusCode < 500) {
+        console.log(domain + ' is up!!');
+        resolve(true);
+      } else {
+        if (error) {
+          console.log('domain check err: ' + error);
+        } else {
+          console.log(domain + ' is down!!');
+        }
+        resolve(false);
+      }
+    });
   });
 }
 
@@ -108,7 +114,7 @@ async function purge() {
     if (isIHAlive) {
       console.log('purging', targetUrls);
       try {
-        const data = await cf.zones.purgeCache(CF_ZONE, { files: targetUrls });
+        const data = await cf.cache.purge({ zone_id: CF_ZONE, files: targetUrls });
         console.log(`${new Date().toISOString()} result:`, data);
         users = [];
         await storage.setItem('users', users);

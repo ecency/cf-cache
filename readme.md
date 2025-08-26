@@ -7,8 +7,8 @@ Simple script to purge Cloudflare cache for user avatars, cache purged when acco
 
 `CF_ZONE` - Cloudflare zone ID for your domain
 
-`CF_API_TOKEN` - Cloudflare API token with permission to purge cache for the zone
+`CF_API_TOKEN` or `CF_ACCOUNT_API_TOKEN` - Cloudflare API token with permission to purge cache for the zone
 
-`CF_EMAIL` and `CF_KEY` - legacy email and global API key (used only if `CF_API_TOKEN` is not provided)
+`CF_EMAIL` and `CF_KEY` - legacy email and global API key (used only if no token is provided)
 
 `DOMAIN` - imagehoster instance, e.g. https://images.ecency.com
