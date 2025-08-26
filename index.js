@@ -1,6 +1,6 @@
 const dhive = require('@hiveio/dhive')
 const _ = require('lodash')
-const Cloudflare = require('cloudflare').default
+const { Cloudflare } = require('cloudflare')
 const request = require("request");
 const { uniq } = require('lodash');
 const storage = require('node-persist');
@@ -38,8 +38,12 @@ async function getOperations() {
             if (op[0] === 'account_update2') {
               const user = op[1].account
               users.push(user);
-              await storage.setItem('users',users);
-              await purge();
+              await storage.setItem('users', users);
+              try {
+                await purge();
+              } catch (e) {
+                console.error(new Date().toISOString(), 'purge failed', e);
+              }
             }
           }
         }
@@ -96,7 +100,7 @@ async function purge() {
     if (isIHAlive) {
       console.log('purging', targetUrls);
       try {
-        const data = await cf.zones.purgeCache(CF_ZONE, { files: targetUrls });
+        const data = await cf.cache.purge({ zone_id: CF_ZONE, files: targetUrls });
         console.log(`${new Date().toISOString()} result:`, data);
         users = [];
         await storage.setItem('users', users);
