@@ -70,7 +70,7 @@ async function getOperations() {
 
 getOperations()
 
-function die(msg) { 
+function die(msg) {
   process.stderr.write(msg+'\n')
   process.exit(1)
 }
@@ -109,12 +109,12 @@ async function purge() {
           `${domain}/webp/u/${u}/avatar/large`,
           `${domain}/webp/u/${u}/cover`,
           `${domain}/u/${u}/cover`,
-        ]      
+        ]
       ]
     }
     const isIHAlive = await ihAlive();
     if (isIHAlive) {
-      console.log('purging', targetUrls.length, 'files');
+      console.log('purging', targetUrls.length, 'files', users[0]);
       const batches = _.chunk(targetUrls, PURGE_BATCH_SIZE);
       for (const files of batches) {
         try {
