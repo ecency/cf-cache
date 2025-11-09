@@ -78,15 +78,21 @@ function die(msg) {
 async function ihAlive() {
   return new Promise((resolve) => {
     request(domain, (error, response) => {
-      if (!error && response && response.statusCode < 500) {
+      if (error) {
+        console.log('domain check err: ' + error);
+        return resolve(false);
+      }
+
+      if (!response) {
+        console.log('domain check err: missing response');
+        return resolve(false);
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202) {
         console.log(domain + ' is up!!');
         resolve(true);
       } else {
-        if (error) {
-          console.log('domain check err: ' + error);
-        } else {
-          console.log(domain + ' is down!!');
-        }
+        console.log(domain + ' is down!!');
         resolve(false);
       }
     });
